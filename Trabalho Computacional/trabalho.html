@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro e Exibição</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        header {
+            background-color: #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        header button {
+            padding: 10px;
+            margin: 0 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        header button:hover {
+            background-color: #555;
+        }
+        #cadastro, #exibicao {
+            display: none;
+            margin: 20px;
+        }
+        .botao-cadastro, .botao-exibicao {
+            margin: 10px;
+        }
+        .csv-section {
+            display: none;
+            margin: 20px;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        .data {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <button id="cadastroBtn">Cadastro</button>
+    <button id="exibicaoBtn">Exibição</button>
+</header>
+
+<div id="cadastro">
+    <h2>Escolha uma opção de cadastro:</h2>
+    <button class="botao-cadastro" id="livroBtn">Cadastrar Livro</button>
+    <button class="botao-cadastro" id="autorBtn">Cadastrar Autor</button>
+    <button class="botao-cadastro" id="usuarioBtn">Cadastrar Usuário</button>
+    <button class="botao-cadastro" id="emprestimoBtn">Cadastrar Empréstimo</button>
+</div>
+
+<!-- Sessão de Upload de Arquivo CSV -->
+<div id="csvUpload" class="csv-section">
+    <h3 id="csvTitle">Cadastrar Dados</h3>
+    <input type="file" id="csvFileInput" accept=".csv">
+    <button onclick="lerCSV()">Ler CSV</button>
+</div>
+
+<div id="exibicao">
+    <h2>Escolha uma opção de exibição:</h2>
+    <button class="botao-exibicao" id="exibirRelacionamentoBtn">Exibir Relacionamento de Dados</button>
+
+    <div id="dados" class="data">
+        <p>Selecione uma opção para exibir os dados.</p>
+    </div>
+</div>
+
+<script>
+    const cadastroBtn = document.getElementById('cadastroBtn');
+    const exibicaoBtn = document.getElementById('exibicaoBtn');
+    const cadastroDiv = document.getElementById('cadastro');
+    const exibicaoDiv = document.getElementById('exibicao');
+    const csvUpload = document.getElementById('csvUpload');
+    let csvData = {};
+
+    // Botões de Cadastro
+    const livroBtn = document.getElementById('livroBtn');
+    const autorBtn = document.getElementById('autorBtn');
+    const usuarioBtn = document.getElementById('usuarioBtn');
+    const emprestimoBtn = document.getElementById('emprestimoBtn');
+
+    // Botão para exibir relacionamento
+    const exibirRelacionamentoBtn = document.getElementById('exibirRelacionamentoBtn');
+
+    let tipoCadastro = '';
+
+    // Exibir opções de cadastro
+    cadastroBtn.addEventListener('click', () => {
+        cadastroDiv.style.display = 'block';
+        exibicaoDiv.style.display = 'none';
+        csvUpload.style.display = 'none';
+    });
+
+    // Exibir opções de exibição
+    exibicaoBtn.addEventListener('click', () => {
+        cadastroDiv.style.display = 'none';
+        exibicaoDiv.style.display = 'block';
+        csvUpload.style.display = 'none';
+    });
+
+    // Ação ao clicar em Cadastrar Livro
+    livroBtn.addEventListener('click', () => {
+        mostrarUpload('Livro');
+    });
+
+    // Ação ao clicar em Cadastrar Autor
+    autorBtn.addEventListener('click', () => {
+        mostrarUpload('Autor');
+    });
+
+    // Ação ao clicar em Cadastrar Usuário
+    usuarioBtn.addEventListener('click', () => {
+        mostrarUpload('Usuário');
+    });
+
+    // Ação ao clicar em Cadastrar Empréstimo
+    emprestimoBtn.addEventListener('click', () => {
+        mostrarUpload('Empréstimo');
+    });
+
+    // Ação ao clicar em Exibir Relacionamento
+    exibirRelacionamentoBtn.addEventListener('click', () => {
+        exibirRelacionamento();
+    });
+
+    function mostrarUpload(tipo) {
+        tipoCadastro = tipo;
+        csvUpload.style.display = 'block';
+        document.getElementById('csvTitle').innerText = `Cadastrar ${tipo}`;
+    }
+
+    function lerCSV() {
+        const input = document.getElementById('csvFileInput');
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const csv = e.target.result;
+                csvData[tipoCadastro] = csvToArray(csv);
+                alert(`${tipoCadastro} cadastrado com sucesso!`);
+            };
+            reader.readAsText(file);
+        } else {
+            alert('Por favor, selecione um arquivo CSV.');
+        }
+    }
+
+    function csvToArray(str, delimiter = ',') {
+        const headers = str.slice(0, str.indexOf("\n")).split(delimiter);
+        const rows = str.slice(str.indexOf("\n") + 1).split("\n");
+        return rows.map(function (row) {
+            const values = row.split(delimiter);
+            const obj = headers.reduce(function (object, header, index) {
+                object[header] = values[index];
+                return object;
+            }, {});
+            return obj;
+        });
+    }
+
+    function exibirRelacionamento() {
+        const dadosDiv = document.getElementById('dados');
+        dadosDiv.innerHTML = '';
+
+        if (csvData['Livro'] && csvData['Autor'] && csvData['Usuário'] && csvData['Empréstimo']) {
+            const tabela = document.createElement('table');
+            const cabecalho = document.createElement('tr');
+            const colunas = ['Nome do Livro', 'Autor', 'Estudante', 'Empréstimo Feito'];
+            
+            colunas.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                cabecalho.appendChild(th);
+            });
+            tabela.appendChild(cabecalho);
+
+            csvData['Empréstimo'].forEach(emprestimo => {
+                const livro = csvData['Livro'].find(l => l['ID'] === emprestimo['LivroID']);
+                const autor = csvData['Autor'].find(a => a['ID'] === livro['AutorID']);
+                const usuario = csvData['Usuário'].find(u => u['ID'] === emprestimo['UsuarioID']);
+                
+                if (livro && autor && usuario) {
+                    const row = document.createElement('tr');
+                    const colunas = [
+                        livro['Nome'],    // Nome do Livro
+                        autor['Nome'],    // Autor
+                        usuario['Nome'],  // Estudante
+                        emprestimo['Data'] // Empréstimo Feito
+                    ];
+                    colunas.forEach(valor => {
+                        const td = document.createElement('td');
+                        td.textContent = valor;
+                        row.appendChild(td);
+                    });
+                    tabela.appendChild(row);
+                }
+            });
+
+            dadosDiv.appendChild(tabela);
+        } else {
+            dadosDiv.innerHTML = '<p>Dados insuficientes para exibir o relacionamento. Certifique-se de que todos os arquivos CSV foram carregados.</p>';
+        }
+    }
+</script>
+
+</body>
+</html>
